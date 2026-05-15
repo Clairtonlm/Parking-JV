@@ -22,7 +22,7 @@
     <section class="grid-2">
         <article class="panel">
             <h2>Entrada de veículo</h2>
-            <form th:action="@{/operacao/entrada}" method="post" class="form" th:object="${entrada}">
+            <form th:action="@{/operacao/entrada}" method="post" class="form" th:object="${entrada}" id="formEntrada">
                 <label>Placa
                     <input type="text" th:field="*{placa}" placeholder="ABC1D23" required maxlength="8">
                 </label>
@@ -30,9 +30,19 @@
                     <input type="text" th:field="*{nomeMotorista}" placeholder="Nome completo" required maxlength="120">
                 </label>
                 <label>Tipo
-                    <select th:field="*{tipoVeiculo}" required>
+                    <select th:field="*{tipoVeiculo}" id="tipoVeiculo" required>
                         <option value="CARRO">Carro</option>
                         <option value="MOTO">Moto</option>
+                    </select>
+                </label>
+                <label>Vaga
+                    <select th:field="*{numeroVaga}" id="vagaSelect" required>
+                        <option value="">Selecione o tipo e a vaga</option>
+                        <option th:each="v : ${operacao.vagas()}"
+                                th:if="${!v.ocupada}"
+                                th:value="${v.numero}"
+                                th:attr="data-tipo=${v.tipoVeiculo}"
+                                th:text="${v.rotulo}">01 (Carro)</option>
                     </select>
                 </label>
                 <label>Modalidade de pagamento
@@ -43,18 +53,23 @@
                 <button type="submit" class="btn btn-primary">Registrar entrada e imprimir recibo</button>
             </form>
             <ul class="hint-list">
-                <li><strong>Fixo 24h:</strong> valor único, válido por 24 horas</li>
-                <li><strong>Fração:</strong> R$ 5/h, tolerância 15 min</li>
-                <li><strong>Bloco 5h:</strong> R$ 20 — excedente + R$ 2 / 15 min</li>
-                <li><strong>Bloco 10h:</strong> R$ 45 — excedente + R$ 2 / 15 min</li>
+                <li>Carros: vagas 01 a 15 · Motos: vagas 01 a 05</li>
+                <li>A vaga escolhida aparece no comprovante do motorista</li>
             </ul>
         </article>
 
         <article class="panel">
             <h2>Saída de veículo</h2>
-            <form th:action="@{/operacao/preview}" method="get" class="form inline-preview">
-                <label>Placa ou nome do motorista
-                    <input type="text" name="termo" th:value="${previewTermo}" placeholder="ABC1D23 ou João" required>
+            <form th:action="@{/operacao/preview}" method="get" class="form">
+                <label>Veículo no pátio
+                    <select name="registroId" required>
+                        <option value="">— Selecione —</option>
+                        <option th:each="v : ${operacao.veiculosNoPatio()}"
+                                th:value="${v.id}"
+                                th:selected="${previewRegistroId != null and previewRegistroId == v.id}"
+                                th:text="${v.placa + ' · ' + v.nomeMotorista + ' · Vaga ' + (v.tipoVeiculo.name() == 'CARRO' ? 'Carro ' : 'Moto ') + #numbers.formatInteger(v.numeroVaga, 2)}">
+                        </option>
+                    </select>
                 </label>
                 <button type="submit" class="btn btn-secondary">Consultar valor</button>
             </form>
@@ -63,20 +78,35 @@
                 <strong th:text="'R$ ' + ${#numbers.formatDecimal(previewValor, 1, 2)}">R$ 0,00</strong>
             </div>
             <form th:action="@{/operacao/saida}" method="post" class="form">
-                <label>Placa ou nome para saída
-                    <input type="text" name="termo" th:value="${previewTermo}" placeholder="ABC1D23 ou João" required>
+                <label>Veículo para saída
+                    <select name="registroId" required>
+                        <option value="">— Selecione —</option>
+                        <option th:each="v : ${operacao.veiculosNoPatio()}"
+                                th:value="${v.id}"
+                                th:selected="${previewRegistroId != null and previewRegistroId == v.id}"
+                                th:text="${v.placa + ' · ' + v.nomeMotorista + ' · Vaga ' + (v.tipoVeiculo.name() == 'CARRO' ? 'Carro ' : 'Moto ') + #numbers.formatInteger(v.numeroVaga, 2)}">
+                        </option>
+                    </select>
                 </label>
                 <button type="submit" class="btn btn-primary">Registrar saída e imprimir recibo</button>
             </form>
+            <p class="hint">Ou use o botão <strong>Sair</strong> na tabela abaixo.</p>
         </article>
     </section>
 
     <section class="panel">
         <h2>Mapa de vagas</h2>
+        <div class="mapa-legenda">
+            <span><i class="dot carro"></i> Carro</span>
+            <span><i class="dot moto"></i> Moto</span>
+            <span><i class="dot livre"></i> Livre</span>
+            <span><i class="dot ocupada"></i> Ocupada</span>
+        </div>
         <div class="vagas-grid">
             <div th:each="vaga : ${operacao.vagas()}"
-                 th:class="${'vaga ' + (vaga.ocupada ? 'ocupada' : 'livre')}"
-                 th:text="${vaga.numero}">1</div>
+                 th:class="${'vaga ' + (vaga.tipoVeiculo.name() == 'CARRO' ? 'carro ' : 'moto ') + (vaga.ocupada ? 'ocupada' : 'livre')}"
+                 th:title="${vaga.rotulo}"
+                 th:text="${#numbers.formatInteger(vaga.numero, 2)}">01</div>
         </div>
     </section>
 
@@ -92,22 +122,32 @@
                 <th>Modalidade</th>
                 <th>Vaga</th>
                 <th>Entrada</th>
+                <th>Ações</th>
             </tr>
             </thead>
             <tbody>
             <tr th:each="v : ${operacao.veiculosNoPatio()}">
-                <td th:text="${v.codigoRecibo}">CODE</td>
+                <td>
+                    <a th:href="@{/recibo/entrada/{id}(id=${v.id}, reimprimir=true)}" class="link-recibo" th:text="${v.codigoRecibo}">CODE</a>
+                </td>
                 <td th:text="${v.placa}">ABC</td>
                 <td th:text="${v.nomeMotorista}">Nome</td>
                 <td th:text="${v.tipoVeiculo}">CARRO</td>
                 <td th:text="${v.modalidade.descricao}">Mod</td>
-                <td th:text="${v.numeroVaga}">1</td>
+                <td th:text="${v.tipoVeiculo.name() == 'CARRO' ? 'Carro ' : 'Moto '} + ${#numbers.formatInteger(v.numeroVaga, 2)}">15</td>
                 <td th:text="${#temporals.format(v.entrada, 'dd/MM/yyyy HH:mm')}">—</td>
+                <td class="actions">
+                    <a th:href="@{/recibo/entrada/{id}(id=${v.id}, reimprimir=true)}" class="btn btn-sm btn-secondary" title="Ver e imprimir comprovante de entrada">Recibo</a>
+                    <form th:action="@{/operacao/saida/{id}(id=${v.id})}" method="post" class="inline-form">
+                        <button type="submit" class="btn btn-sm btn-danger">Sair</button>
+                    </form>
+                </td>
             </tr>
             </tbody>
         </table>
         <p th:if="${operacao.veiculosNoPatio().isEmpty()}" class="empty">Nenhum veículo no pátio.</p>
     </section>
 </main>
+<script th:src="@{/js/operacao.js}"></script>
 </body>
 </html>

@@ -4,8 +4,9 @@ import br.com.evolucaoparking.config.ParkingProperties;
 import br.com.evolucaoparking.dto.EntradaRequest;
 import br.com.evolucaoparking.dto.OperacaoView;
 import br.com.evolucaoparking.dto.SaidaResponse;
-import br.com.evolucaoparking.model.RegistroEstacionamento;
 import br.com.evolucaoparking.model.PerfilUsuario;
+import br.com.evolucaoparking.model.RegistroEstacionamento;
+import br.com.evolucaoparking.model.TipoVeiculo;
 import br.com.evolucaoparking.model.Turno;
 import br.com.evolucaoparking.model.Usuario;
 import br.com.evolucaoparking.model.Vaga;
@@ -17,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 public class EstacionamentoService {
@@ -43,10 +43,10 @@ public class EstacionamentoService {
 
     @Transactional(readOnly = true)
     public OperacaoView carregarOperacao() {
-        List<Vaga> vagas = vagaRepository.findAllByOrderByNumeroAsc();
+        var vagas = vagaRepository.findAllByOrderByTipoVeiculoAscNumeroAsc();
         long ocupadas = vagas.stream().filter(Vaga::isOcupada).count();
         return new OperacaoView(
-                properties.getTotalVagas(),
+                properties.getVagasCarro() + properties.getVagasMoto(),
                 vagas.size() - ocupadas,
                 ocupadas,
                 vagas,
@@ -62,9 +62,12 @@ public class EstacionamentoService {
 
     @Transactional(readOnly = true)
     public BigDecimal previewValorSaida(String placaOuNome) {
-        RegistroEstacionamento registro = localizarAtivo(placaOuNome);
-        long minutos = Duration.between(registro.getEntrada(), LocalDateTime.now()).toMinutes();
-        return tarifaService.calcular(registro.getModalidade(), minutos);
+        return previewValor(localizarAtivo(placaOuNome));
+    }
+
+    @Transactional(readOnly = true)
+    public BigDecimal previewValorSaidaPorId(Long registroId) {
+        return previewValor(buscarAtivoPorId(registroId));
     }
 
     @Transactional
@@ -76,10 +79,13 @@ public class EstacionamentoService {
             throw new IllegalStateException("Veículo com placa " + placa + " já está no pátio.");
         }
 
-        Vaga vaga = vagaRepository.findAllByOrderByNumeroAsc().stream()
-                .filter(v -> !v.isOcupada())
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Não há vagas disponíveis no momento."));
+        Vaga vaga = vagaRepository.findByNumeroAndTipoVeiculo(request.numeroVaga(), request.tipoVeiculo())
+                .orElseThrow(() -> new IllegalStateException(
+                        "Vaga " + request.numeroVaga() + " não encontrada para " + labelTipo(request.tipoVeiculo()) + "."));
+
+        if (vaga.isOcupada()) {
+            throw new IllegalStateException("Vaga " + vaga.getRotulo() + " já está ocupada.");
+        }
 
         vaga.setOcupada(true);
         vagaRepository.save(vaga);
@@ -99,9 +105,17 @@ public class EstacionamentoService {
 
     @Transactional
     public SaidaResponse registrarSaida(String placaOuNome, Usuario funcionario) {
+        return finalizarSaida(buscarAtivo(localizarAtivo(placaOuNome)), funcionario);
+    }
+
+    @Transactional
+    public SaidaResponse registrarSaidaPorId(Long registroId, Usuario funcionario) {
+        return finalizarSaida(buscarAtivoPorId(registroId), funcionario);
+    }
+
+    private SaidaResponse finalizarSaida(RegistroEstacionamento registro, Usuario funcionario) {
         Turno turno = obterTurnoObrigatorio(funcionario);
 
-        RegistroEstacionamento registro = localizarAtivo(placaOuNome);
         LocalDateTime saida = LocalDateTime.now();
         long minutos = Duration.between(registro.getEntrada(), saida).toMinutes();
         BigDecimal valor = tarifaService.calcular(registro.getModalidade(), minutos);
@@ -111,8 +125,8 @@ public class EstacionamentoService {
         registro.setTurnoSaida(turno);
         registroRepository.save(registro);
 
-        Vaga vaga = vagaRepository.findByNumero(registro.getNumeroVaga())
-                .orElseThrow(() -> new IllegalStateException("Vaga " + registro.getNumeroVaga() + " não encontrada."));
+        Vaga vaga = vagaRepository.findByNumeroAndTipoVeiculo(registro.getNumeroVaga(), registro.getTipoVeiculo())
+                .orElseThrow(() -> new IllegalStateException("Vaga não encontrada para liberar."));
         vaga.setOcupada(false);
         vagaRepository.save(vaga);
 
@@ -131,10 +145,27 @@ public class EstacionamentoService {
         );
     }
 
+    private BigDecimal previewValor(RegistroEstacionamento registro) {
+        long minutos = Duration.between(registro.getEntrada(), LocalDateTime.now()).toMinutes();
+        return tarifaService.calcular(registro.getModalidade(), minutos);
+    }
+
+    private RegistroEstacionamento buscarAtivoPorId(Long id) {
+        return registroRepository.findByIdAndSaidaIsNull(id)
+                .orElseThrow(() -> new IllegalStateException("Veículo não encontrado no pátio."));
+    }
+
+    private RegistroEstacionamento buscarAtivo(RegistroEstacionamento registro) {
+        if (!registro.isAtivo()) {
+            throw new IllegalStateException("Este veículo já teve a saída registrada.");
+        }
+        return registro;
+    }
+
     private RegistroEstacionamento localizarAtivo(String placaOuNome) {
         String termo = placaOuNome.trim();
         if (termo.isBlank()) {
-            throw new IllegalStateException("Informe a placa ou o nome do motorista.");
+            throw new IllegalStateException("Informe a placa ou selecione o veículo.");
         }
 
         String placa = normalizarPlaca(termo);
@@ -163,5 +194,14 @@ public class EstacionamentoService {
 
     private String normalizarPlaca(String placa) {
         return placa.replace("-", "").replace(" ", "").toUpperCase().trim();
+    }
+
+    private String labelTipo(TipoVeiculo tipo) {
+        return tipo == TipoVeiculo.CARRO ? "carro" : "moto";
+    }
+
+    public static String rotuloVaga(RegistroEstacionamento registro) {
+        String tipo = registro.getTipoVeiculo() == TipoVeiculo.CARRO ? "Carro" : "Moto";
+        return String.format("%02d (%s)", registro.getNumeroVaga(), tipo);
     }
 }

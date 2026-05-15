@@ -36,6 +36,7 @@ public class MigratingDataSource extends AbstractDataSource {
             return;
         }
         try (Connection conn = target.getConnection()) {
+            migrarVagas(conn);
             if (!tabelaExiste(conn, "REGISTROS")) {
                 return;
             }
@@ -62,6 +63,50 @@ public class MigratingDataSource extends AbstractDataSource {
         } catch (SQLException ex) {
             migrated.set(false);
             throw new IllegalStateException("Falha ao migrar tabela registros", ex);
+        }
+    }
+
+    private void migrarVagas(Connection conn) throws SQLException {
+        if (!tabelaExiste(conn, "VAGAS")) {
+            return;
+        }
+        adicionarColuna(conn, "VAGAS", "TIPO_VEICULO", "VARCHAR(10) NOT NULL DEFAULT 'CARRO'");
+        try (Statement st = conn.createStatement()) {
+            st.executeUpdate("UPDATE vagas SET tipo_veiculo = 'CARRO' WHERE tipo_veiculo IS NULL");
+        }
+        removerIndiceUnicoAntigoNumero(conn);
+        try (Statement st = conn.createStatement()) {
+            st.execute("""
+                    CREATE UNIQUE INDEX IF NOT EXISTS uk_vagas_numero_tipo
+                    ON vagas (numero, tipo_veiculo)
+                    """);
+        } catch (SQLException ignored) {
+            // índice já existe via Hibernate
+        }
+    }
+
+    private void removerIndiceUnicoAntigoNumero(Connection conn) throws SQLException {
+        try (Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery("""
+                     SELECT CONSTRAINT_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+                     WHERE TABLE_NAME = 'VAGAS' AND CONSTRAINT_TYPE = 'UNIQUE'
+                     """)) {
+            while (rs.next()) {
+                String nome = rs.getString(1);
+                if (nome != null && !nome.equalsIgnoreCase("uk_vagas_numero_tipo")) {
+                    executarSilencioso(conn, "ALTER TABLE vagas DROP CONSTRAINT " + nome);
+                }
+            }
+        }
+        executarSilencioso(conn, "DROP INDEX IF EXISTS UK_R3SEKN14G8FFSVQJKBCD8HINK_INDEX_A");
+        executarSilencioso(conn, "ALTER TABLE vagas DROP CONSTRAINT IF EXISTS UK_R3SEKN14G8FFSVQJKBCD8HINK");
+    }
+
+    private void executarSilencioso(Connection conn, String sql) {
+        try (Statement st = conn.createStatement()) {
+            st.execute(sql);
+        } catch (SQLException ignored) {
+            // constraint/index pode não existir
         }
     }
 

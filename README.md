@@ -52,6 +52,22 @@ Acesse: [http://localhost:8080](http://localhost:8080)
 
 Se aparecer erro tipo `CODIGO_RECIBO not found`, o banco H2 foi criado com versão antiga. Pare o servidor e apague a pasta `data/` na raiz do projeto (ou só os arquivos `evolucao-parking.*`), depois suba de novo. Os usuários padrão serão recriados.
 
+## Pix no comprovante
+
+Configure sua chave Pix em `application.properties`:
+
+```properties
+app.pix.enabled=true
+app.pix.chave=+5585999999999
+app.pix.nome-beneficiario=Seu Nome ou Empresa
+app.pix.cidade=SUA CIDADE
+```
+
+- **Recibo de saída:** QR Code com o **valor exato** a pagar + Pix Copia e Cola
+- **Recibo de entrada:** QR Code da chave (pagamento na saída com valor no ticket de saída)
+
+Use a chave Pix cadastrada no seu banco (C6, Nubank, etc.) — telefone, e-mail, CPF ou aleatória.
+
 ## Testes
 
 ```powershell

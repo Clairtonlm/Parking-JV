@@ -1,6 +1,7 @@
 package br.com.evolucaoparking.config;
 
 import br.com.evolucaoparking.model.PerfilUsuario;
+import br.com.evolucaoparking.model.TipoVeiculo;
 import br.com.evolucaoparking.model.Usuario;
 import br.com.evolucaoparking.model.Vaga;
 import br.com.evolucaoparking.repository.UsuarioRepository;
@@ -21,9 +22,9 @@ public class DataInitializer {
             PasswordEncoder passwordEncoder) {
         return args -> {
             if (vagaRepository.count() == 0) {
-                for (int i = 1; i <= properties.getTotalVagas(); i++) {
-                    vagaRepository.save(new Vaga(i));
-                }
+                criarVagas(vagaRepository, properties);
+            } else {
+                garantirVagasMoto(vagaRepository, properties);
             }
 
             if (usuarioRepository.findByLoginIgnoreCase("admin").isEmpty()) {
@@ -38,5 +39,20 @@ public class DataInitializer {
                 usuarioRepository.save(func);
             }
         };
+    }
+
+    private void criarVagas(VagaRepository vagaRepository, ParkingProperties properties) {
+        for (int i = 1; i <= properties.getVagasCarro(); i++) {
+            vagaRepository.save(new Vaga(i, TipoVeiculo.CARRO));
+        }
+        garantirVagasMoto(vagaRepository, properties);
+    }
+
+    private void garantirVagasMoto(VagaRepository vagaRepository, ParkingProperties properties) {
+        for (int i = 1; i <= properties.getVagasMoto(); i++) {
+            if (vagaRepository.findByNumeroAndTipoVeiculo(i, TipoVeiculo.MOTO).isEmpty()) {
+                vagaRepository.save(new Vaga(i, TipoVeiculo.MOTO));
+            }
+        }
     }
 }

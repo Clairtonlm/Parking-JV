@@ -5,6 +5,7 @@ import br.com.evolucaoparking.model.TipoVeiculo;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 public record EntradaRequest(
@@ -20,10 +21,14 @@ public record EntradaRequest(
         @NotNull(message = "Selecione o tipo do veículo")
         TipoVeiculo tipoVeiculo,
 
+        @NotNull(message = "Selecione a vaga")
+        @Positive(message = "Selecione uma vaga válida")
+        Integer numeroVaga,
+
         @NotNull(message = "Selecione a modalidade de pagamento")
         ModalidadePagamento modalidade
 ) {
     public static EntradaRequest vazio() {
-        return new EntradaRequest("", "", TipoVeiculo.CARRO, ModalidadePagamento.FRACAO_HORA);
+        return new EntradaRequest("", "", TipoVeiculo.CARRO, null, ModalidadePagamento.FRACAO_HORA);
     }
 }

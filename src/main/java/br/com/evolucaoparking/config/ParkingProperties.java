@@ -6,6 +6,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class ParkingProperties {
 
     private int totalVagas = 20;
+    private int vagasCarro = 15;
+    private int vagasMoto = 5;
     private double valorFixo24h = 40.0;
     private double tarifaHora = 5.0;
     private int toleranciaMinutos = 15;
@@ -21,6 +23,22 @@ public class ParkingProperties {
 
     public void setTotalVagas(int totalVagas) {
         this.totalVagas = totalVagas;
+    }
+
+    public int getVagasCarro() {
+        return vagasCarro;
+    }
+
+    public void setVagasCarro(int vagasCarro) {
+        this.vagasCarro = vagasCarro;
+    }
+
+    public int getVagasMoto() {
+        return vagasMoto;
+    }
+
+    public void setVagasMoto(int vagasMoto) {
+        this.vagasMoto = vagasMoto;
     }
 
     public double getValorFixo24h() {

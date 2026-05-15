@@ -2,7 +2,7 @@
 <html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title th:text="${tipo == 'ENTRADA' ? 'Recibo de Entrada' : 'Recibo de Saída'}">Recibo</title>
+    <title th:text="${tipo == 'ENTRADA' ? (reimpressao ? 'Reimpressão - Entrada' : 'Recibo de Entrada') : 'Recibo de Saída'}">Recibo</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link rel="stylesheet" th:href="@{/css/recibo.css}">
 </head>
@@ -10,7 +10,7 @@
 <article class="recibo">
     <header class="recibo-header">
         <h1>EvoluçãoParking</h1>
-        <p th:text="${tipo == 'ENTRADA' ? 'COMPROVANTE DE ENTRADA' : 'COMPROVANTE DE SAÍDA'}">RECIBO</p>
+        <p th:text="${tipo == 'ENTRADA' ? (reimpressao ? 'REIMPRESSÃO - ENTRADA' : 'COMPROVANTE DE ENTRADA') : 'COMPROVANTE DE SAÍDA'}">RECIBO</p>
     </header>
 
     <p class="recibo-codigo">Código: <strong th:text="${registro.codigoRecibo}">ABC123</strong></p>
@@ -20,7 +20,7 @@
         <tr><td>Motorista</td><td th:text="${registro.nomeMotorista}">Nome</td></tr>
         <tr><td>Tipo</td><td th:text="${registro.tipoVeiculo}">CARRO</td></tr>
         <tr><td>Modalidade</td><td th:text="${registro.modalidade.descricao}">—</td></tr>
-        <tr><td>Vaga</td><td th:text="${registro.numeroVaga}">1</td></tr>
+        <tr><td>Vaga</td><td th:text="${rotuloVaga}">01 (Carro)</td></tr>
         <tr><td>Entrada</td><td th:text="${#temporals.format(registro.entrada, 'dd/MM/yyyy HH:mm')}">—</td></tr>
         <tr th:if="${tipo == 'SAIDA'}">
             <td>Saída</td>
@@ -36,12 +36,29 @@
         </tr>
     </table>
 
-    <p class="recibo-aviso" th:if="${tipo == 'ENTRADA'}">
+    <p class="recibo-aviso" th:if="${tipo == 'ENTRADA' && reimpressao}">
+        Reimpressão do comprovante de entrada.
+    </p>
+    <p class="recibo-aviso" th:if="${tipo == 'ENTRADA' && !reimpressao}">
         Guarde este comprovante. Na saída, informe a placa ou seu nome.
     </p>
     <p class="recibo-aviso" th:if="${tipo == 'SAIDA'}">
         Obrigado pela preferência!
     </p>
+
+    <section class="recibo-pix" th:if="${pixAtivo}">
+        <h2>Pagamento via Pix</h2>
+        <p th:if="${pixComValor}" class="pix-valor">
+            Valor: <strong th:text="'R$ ' + ${#numbers.formatDecimal(pixValor, 1, 2)}">R$ 0,00</strong>
+        </p>
+        <p th:if="${!pixComValor}" class="pix-hint">Escaneie no app do seu banco (valor informado na saída).</p>
+        <p th:if="${pixErro}" class="pix-erro" th:text="${pixErro}"></p>
+        <img th:if="${pixQrCodeBase64 != null}" class="pix-qrcode" th:src="'data:image/png;base64,' + ${pixQrCodeBase64}" alt="QR Code Pix">
+        <p class="pix-label">Pix Copia e Cola</p>
+        <p class="pix-payload" id="pixPayload" th:text="${pixPayload}">payload</p>
+        <p class="pix-chave">Chave: <span th:text="${pixChave}">chave</span></p>
+        <button type="button" class="btn btn-secondary btn-copy-pix no-print" onclick="copiarPix()">Copiar Pix</button>
+    </section>
 
     <footer class="recibo-footer">
         <small th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy HH:mm:ss')}">data</small>
@@ -52,5 +69,13 @@
     <button onclick="window.print()" class="btn btn-primary">Imprimir</button>
     <a th:href="@{/operacao}" class="btn btn-secondary">Voltar à operação</a>
 </div>
+<script th:if="${pixAtivo}">
+    function copiarPix() {
+        const texto = document.getElementById('pixPayload').innerText;
+        navigator.clipboard.writeText(texto).then(function () {
+            alert('Código Pix copiado!');
+        });
+    }
+</script>
 </body>
 </html>

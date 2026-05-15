@@ -138,6 +138,7 @@
                 <td th:text="${#temporals.format(v.entrada, 'dd/MM/yyyy HH:mm')}">—</td>
                 <td class="actions">
                     <a th:href="@{/recibo/entrada/{id}(id=${v.id}, reimprimir=true)}" class="btn btn-sm btn-secondary" title="Ver e imprimir comprovante de entrada">Recibo</a>
+                    <a th:href="@{/operacao/registro/{id}/editar(id=${v.id})}" class="btn btn-sm btn-secondary" title="Alterar modalidade de pagamento">Editar</a>
                     <form th:action="@{/operacao/saida/{id}(id=${v.id})}" method="post" class="inline-form">
                         <button type="submit" class="btn btn-sm btn-danger">Sair</button>
                     </form>

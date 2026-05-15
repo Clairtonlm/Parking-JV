@@ -416,8 +416,48 @@ th {
     margin-top: 0.5rem;
 }
 
-.container.narrow {
+.container.narrow,
+.panel-narrow {
     max-width: 520px;
+}
+
+.panel-narrow {
+    margin: 0 auto;
+}
+
+.dados-resumo {
+    width: 100%;
+    margin: 1rem 0 1.25rem;
+    border-collapse: collapse;
+}
+
+.dados-resumo td {
+    padding: 0.4rem 0.5rem;
+    border-bottom: 1px solid var(--surface-2);
+    vertical-align: top;
+}
+
+.dados-resumo td:first-child {
+    color: var(--muted);
+    width: 42%;
+}
+
+.hint-inline {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-left: 0.35rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    cursor: pointer;
+}
+
+.checkbox-label input {
+    width: auto;
 }
 
 .btn-sm {

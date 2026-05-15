@@ -2,6 +2,7 @@ package br.com.evolucaoparking.web;
 
 import br.com.evolucaoparking.dto.EntradaRequest;
 import br.com.evolucaoparking.model.ModalidadePagamento;
+import br.com.evolucaoparking.model.RegistroEstacionamento;
 import br.com.evolucaoparking.security.UsuarioDetails;
 import br.com.evolucaoparking.service.EstacionamentoService;
 import jakarta.validation.Valid;
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 @Controller
 @RequestMapping("/operacao")
@@ -108,5 +111,48 @@ public class OperacaoController {
             @AuthenticationPrincipal UsuarioDetails usuario,
             RedirectAttributes redirectAttributes) {
         return saida(id, null, usuario, redirectAttributes);
+    }
+
+    @GetMapping("/registro/{id}/editar")
+    public String editarEntrada(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+        try {
+            RegistroEstacionamento registro = estacionamentoService.buscarRegistro(id);
+            if (!registro.isAtivo()) {
+                redirectAttributes.addFlashAttribute("erro", "Não é possível editar: o veículo já saiu do pátio.");
+                return "redirect:/operacao";
+            }
+            model.addAttribute("registro", registro);
+            model.addAttribute("rotuloVaga", EstacionamentoService.rotuloVaga(registro));
+            long minutos = Duration.between(registro.getEntrada(), LocalDateTime.now()).toMinutes();
+            model.addAttribute("valorEstimadoAtual",
+                    estacionamentoService.previewValorSaidaPorId(registro.getId()));
+            model.addAttribute("minutosPermanencia", minutos);
+            return "operacao/editar";
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("erro", ex.getMessage());
+            return "redirect:/operacao";
+        }
+    }
+
+    @PostMapping("/registro/{id}/editar")
+    public String salvarEdicaoEntrada(
+            @PathVariable Long id,
+            @RequestParam ModalidadePagamento modalidade,
+            @RequestParam(required = false, defaultValue = "false") boolean imprimirRecibo,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            var registro = estacionamentoService.atualizarModalidade(id, modalidade);
+            redirectAttributes.addFlashAttribute(
+                    "sucesso",
+                    "Modalidade alterada para «" + registro.getModalidade().getDescricao() + "».");
+            if (imprimirRecibo) {
+                return "redirect:/recibo/entrada/" + registro.getId() + "?reimprimir=true";
+            }
+            return "redirect:/operacao";
+        } catch (IllegalArgumentException | IllegalStateException ex) {
+            redirectAttributes.addFlashAttribute("erro", ex.getMessage());
+            return "redirect:/operacao/registro/" + id + "/editar";
+        }
     }
 }

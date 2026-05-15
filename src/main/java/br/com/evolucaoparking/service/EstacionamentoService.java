@@ -4,6 +4,7 @@ import br.com.evolucaoparking.config.ParkingProperties;
 import br.com.evolucaoparking.dto.EntradaRequest;
 import br.com.evolucaoparking.dto.OperacaoView;
 import br.com.evolucaoparking.dto.SaidaResponse;
+import br.com.evolucaoparking.model.ModalidadePagamento;
 import br.com.evolucaoparking.model.PerfilUsuario;
 import br.com.evolucaoparking.model.RegistroEstacionamento;
 import br.com.evolucaoparking.model.TipoVeiculo;
@@ -111,6 +112,21 @@ public class EstacionamentoService {
     @Transactional
     public SaidaResponse registrarSaidaPorId(Long registroId, Usuario funcionario) {
         return finalizarSaida(buscarAtivoPorId(registroId), funcionario);
+    }
+
+    @Transactional
+    public RegistroEstacionamento atualizarModalidade(Long registroId, ModalidadePagamento novaModalidade) {
+        if (novaModalidade == null) {
+            throw new IllegalArgumentException("Selecione a modalidade de pagamento.");
+        }
+
+        RegistroEstacionamento registro = buscarAtivoPorId(registroId);
+        if (registro.getModalidade() == novaModalidade) {
+            throw new IllegalStateException("O veículo já está nesta modalidade.");
+        }
+
+        registro.setModalidade(novaModalidade);
+        return registroRepository.save(registro);
     }
 
     private SaidaResponse finalizarSaida(RegistroEstacionamento registro, Usuario funcionario) {

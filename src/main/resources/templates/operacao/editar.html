@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Editar entrada - EvoluçãoParking')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header('Editar entrada no pátio')}"></header>
+
+<main class="container">
+    <div th:if="${sucesso}" class="alert alert-success" th:text="${sucesso}"></div>
+    <div th:if="${erro}" class="alert alert-error" th:text="${erro}"></div>
+
+    <article class="panel panel-narrow">
+        <h2>Alterar modalidade de pagamento</h2>
+        <p class="hint">A entrada permanece a mesma; apenas a forma de cobrança na saída será atualizada.</p>
+
+        <table class="dados-resumo">
+            <tr><td>Recibo</td><td th:text="${registro.codigoRecibo}">CODE</td></tr>
+            <tr><td>Placa</td><td th:text="${registro.placa}">ABC</td></tr>
+            <tr><td>Motorista</td><td th:text="${registro.nomeMotorista}">Nome</td></tr>
+            <tr><td>Tipo / Vaga</td><td th:text="${rotuloVaga}">01 (Carro)</td></tr>
+            <tr><td>Entrada</td><td th:text="${#temporals.format(registro.entrada, 'dd/MM/yyyy HH:mm')}">—</td></tr>
+            <tr><td>Modalidade atual</td><td th:text="${registro.modalidade.descricao}">—</td></tr>
+            <tr>
+                <td>Valor estimado agora</td>
+                <td>
+                    <strong th:text="'R$ ' + ${#numbers.formatDecimal(valorEstimadoAtual, 1, 2)}">R$ 0,00</strong>
+                    <span class="hint-inline" th:text="'(' + ${minutosPermanencia} + ' min no pátio)'">(0 min)</span>
+                </td>
+            </tr>
+        </table>
+
+        <form th:action="@{/operacao/registro/{id}/editar(id=${registro.id})}" method="post" class="form">
+            <label>Nova modalidade de pagamento
+                <select name="modalidade" required>
+                    <option th:each="m : ${modalidades}"
+                            th:value="${m}"
+                            th:selected="${m == registro.modalidade}"
+                            th:text="${m.descricao}"></option>
+                </select>
+            </label>
+            <label class="checkbox-label">
+                <input type="checkbox" name="imprimirRecibo" value="true">
+                Reimprimir comprovante de entrada após salvar
+            </label>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Salvar alteração</button>
+                <a th:href="@{/operacao}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </article>
+</main>
+</body>
+</html>

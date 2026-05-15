@@ -44,9 +44,10 @@ Acesse: [http://localhost:8080](http://localhost:8080)
 
 1. Funcionário faz **login** → turno abre automaticamente
 2. Registra **entrada** (placa, nome, tipo carro/moto, modalidade) → imprime recibo
-3. Na **saída**, consulta valor por placa ou nome → imprime recibo com total
-4. **Logout** encerra o turno
-5. Admin acompanha tudo em `/admin`
+3. Se o motorista mudar de ideia, use **Editar** na tabela «Veículos no pátio» para alterar a modalidade (com opção de reimprimir o recibo)
+4. Na **saída**, consulta valor por placa ou nome → imprime recibo com total
+5. **Logout** encerra o turno
+6. Admin acompanha tudo em `/admin`
 
 ## Erro de coluna no banco (após atualização)
 

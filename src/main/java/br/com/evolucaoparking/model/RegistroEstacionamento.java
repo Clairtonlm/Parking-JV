@@ -104,6 +104,10 @@ public class RegistroEstacionamento {
         return modalidade;
     }
 
+    public void setModalidade(ModalidadePagamento modalidade) {
+        this.modalidade = modalidade;
+    }
+
     public int getNumeroVaga() {
         return numeroVaga;
     }

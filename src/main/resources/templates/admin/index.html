@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Admin - EvoluçãoParking')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header('Painel administrativo')}"></header>
+
+<main class="container">
+    <div th:if="${sucesso}" class="alert alert-success" th:text="${sucesso}"></div>
+
+    <section class="panel actions-bar">
+        <h2>Gestão</h2>
+        <a th:href="@{/admin/funcionarios}" class="btn btn-primary">Cadastro de funcionários</a>
+        <a th:href="@{/operacao}" class="btn btn-secondary">Ir para operação</a>
+    </section>
+
+    <section class="panel">
+        <h2>Histórico de turnos</h2>
+        <p class="hint">Login e logout de cada funcionário, com totais do turno.</p>
+        <table th:if="${!turnos.isEmpty()}">
+            <thead>
+            <tr>
+                <th>Funcionário</th>
+                <th>Login</th>
+                <th>Logout</th>
+                <th>Carros</th>
+                <th>Motos</th>
+                <th>Entradas</th>
+                <th>Caixa (R$)</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="t : ${turnos}">
+                <td th:text="${t.funcionarioNome()}">Nome</td>
+                <td th:text="${#temporals.format(t.loginEm(), 'dd/MM/yyyy HH:mm')}">—</td>
+                <td th:text="${t.logoutEm() != null ? #temporals.format(t.logoutEm(), 'dd/MM/yyyy HH:mm') : 'Em andamento'}">—</td>
+                <td th:text="${t.carros()}">0</td>
+                <td th:text="${t.motos()}">0</td>
+                <td th:text="${t.totalEntradas()}">0</td>
+                <td th:text="${#numbers.formatDecimal(t.caixa(), 1, 2)}">0,00</td>
+            </tr>
+            </tbody>
+        </table>
+        <p th:if="${turnos.isEmpty()}" class="empty">Nenhum turno registrado ainda.</p>
+    </section>
+</main>
+</body>
+</html>

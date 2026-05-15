@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Login - EvoluçãoParking')}"></head>
+<body class="login-page">
+<main class="login-card">
+    <div class="brand-center">
+        <span class="brand-icon lg">P</span>
+        <h1>EvoluçãoParking</h1>
+        <p>Faça login para iniciar seu turno</p>
+    </div>
+
+    <div th:if="${msg}" class="alert alert-success" th:text="${msg}"></div>
+    <div th:if="${erro}" class="alert alert-error" th:text="${erro}"></div>
+
+    <form th:action="@{/login}" method="post" class="form">
+        <label>Login
+            <input type="text" name="username" autocomplete="username" required autofocus>
+        </label>
+        <label>Senha
+            <input type="password" name="password" autocomplete="current-password" required>
+        </label>
+        <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+    </form>
+
+    <p class="hint login-hint">
+        Admin: <strong>admin</strong> / <strong>admin123</strong><br>
+        Funcionário demo: <strong>joao</strong> / <strong>func123</strong>
+    </p>
+</main>
+</body>
+</html>

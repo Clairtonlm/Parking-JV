@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Funcionários - EvoluçãoParking')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header('Cadastro de funcionários')}"></header>
+
+<main class="container">
+    <div th:if="${sucesso}" class="alert alert-success" th:text="${sucesso}"></div>
+
+    <section class="panel actions-bar">
+        <a th:href="@{/admin/funcionarios/novo}" class="btn btn-primary">Novo funcionário</a>
+        <a th:href="@{/admin}" class="btn btn-secondary">Voltar</a>
+    </section>
+
+    <section class="panel">
+        <table th:if="${!funcionarios.isEmpty()}">
+            <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Login</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="f : ${funcionarios}">
+                <td th:text="${f.nome}">Nome</td>
+                <td th:text="${f.login}">login</td>
+                <td>
+                    <span th:class="${f.ativo ? 'badge ok' : 'badge off'}"
+                          th:text="${f.ativo ? 'Ativo' : 'Inativo'}">Ativo</span>
+                </td>
+                <td class="actions">
+                    <a th:href="@{/admin/funcionarios/{id}/editar(id=${f.id})}" class="btn btn-sm">Editar</a>
+                    <form th:if="${f.ativo}" th:action="@{/admin/funcionarios/{id}/status(id=${f.id})}" method="post" class="inline-form">
+                        <input type="hidden" name="ativo" value="false">
+                        <button type="submit" class="btn btn-sm btn-danger">Desativar</button>
+                    </form>
+                    <form th:unless="${f.ativo}" th:action="@{/admin/funcionarios/{id}/status(id=${f.id})}" method="post" class="inline-form">
+                        <input type="hidden" name="ativo" value="true">
+                        <button type="submit" class="btn btn-sm btn-secondary">Ativar</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <p th:if="${funcionarios.isEmpty()}" class="empty">Nenhum funcionário cadastrado.</p>
+    </section>
+</main>
+</body>
+</html>

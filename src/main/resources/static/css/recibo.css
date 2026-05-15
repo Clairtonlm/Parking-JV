@@ -1,0 +1,87 @@
+.recibo-page {
+    background: #fff;
+    color: #111;
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+.recibo {
+    max-width: 320px;
+    margin: 0 auto;
+    border: 1px dashed #333;
+    padding: 1.25rem;
+    font-family: "Courier New", monospace;
+    font-size: 0.85rem;
+}
+
+.recibo-header {
+    text-align: center;
+    border-bottom: 1px solid #333;
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.recibo-header h1 {
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+}
+
+.recibo-codigo {
+    text-align: center;
+    margin-bottom: 0.75rem;
+}
+
+.recibo-dados {
+    width: 100%;
+    margin-bottom: 0.75rem;
+}
+
+.recibo-dados td {
+    padding: 0.25rem 0;
+    vertical-align: top;
+}
+
+.recibo-dados td:first-child {
+    width: 45%;
+    color: #444;
+}
+
+.valor-total td {
+    font-size: 1rem;
+    padding-top: 0.5rem !important;
+    border-top: 1px solid #333;
+}
+
+.recibo-aviso {
+    font-size: 0.75rem;
+    text-align: center;
+    margin: 0.75rem 0;
+}
+
+.recibo-footer {
+    text-align: center;
+    border-top: 1px solid #ccc;
+    padding-top: 0.5rem;
+}
+
+.recibo-actions {
+    max-width: 320px;
+    margin: 1.5rem auto 0;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    .recibo-page {
+        padding: 0;
+    }
+
+    .recibo {
+        border: none;
+    }
+}

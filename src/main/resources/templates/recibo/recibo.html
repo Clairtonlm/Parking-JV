@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${tipo == 'ENTRADA' ? 'Recibo de Entrada' : 'Recibo de Saída'}">Recibo</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/recibo.css}">
+</head>
+<body class="recibo-page">
+<article class="recibo">
+    <header class="recibo-header">
+        <h1>EvoluçãoParking</h1>
+        <p th:text="${tipo == 'ENTRADA' ? 'COMPROVANTE DE ENTRADA' : 'COMPROVANTE DE SAÍDA'}">RECIBO</p>
+    </header>
+
+    <p class="recibo-codigo">Código: <strong th:text="${registro.codigoRecibo}">ABC123</strong></p>
+
+    <table class="recibo-dados">
+        <tr><td>Placa</td><td th:text="${registro.placa}">ABC1D23</td></tr>
+        <tr><td>Motorista</td><td th:text="${registro.nomeMotorista}">Nome</td></tr>
+        <tr><td>Tipo</td><td th:text="${registro.tipoVeiculo}">CARRO</td></tr>
+        <tr><td>Modalidade</td><td th:text="${registro.modalidade.descricao}">—</td></tr>
+        <tr><td>Vaga</td><td th:text="${registro.numeroVaga}">1</td></tr>
+        <tr><td>Entrada</td><td th:text="${#temporals.format(registro.entrada, 'dd/MM/yyyy HH:mm')}">—</td></tr>
+        <tr th:if="${tipo == 'SAIDA'}">
+            <td>Saída</td>
+            <td th:text="${#temporals.format(registro.saida, 'dd/MM/yyyy HH:mm')}">—</td>
+        </tr>
+        <tr th:if="${tipo == 'SAIDA'}">
+            <td>Permanência</td>
+            <td th:text="${minutos + ' min'}">0 min</td>
+        </tr>
+        <tr th:if="${tipo == 'SAIDA'}" class="valor-total">
+            <td><strong>Valor a pagar</strong></td>
+            <td><strong th:text="'R$ ' + ${#numbers.formatDecimal(registro.valorPago, 1, 2)}">R$ 0,00</strong></td>
+        </tr>
+    </table>
+
+    <p class="recibo-aviso" th:if="${tipo == 'ENTRADA'}">
+        Guarde este comprovante. Na saída, informe a placa ou seu nome.
+    </p>
+    <p class="recibo-aviso" th:if="${tipo == 'SAIDA'}">
+        Obrigado pela preferência!
+    </p>
+
+    <footer class="recibo-footer">
+        <small th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy HH:mm:ss')}">data</small>
+    </footer>
+</article>
+
+<div class="recibo-actions no-print">
+    <button onclick="window.print()" class="btn btn-primary">Imprimir</button>
+    <a th:href="@{/operacao}" class="btn btn-secondary">Voltar à operação</a>
+</div>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Funcionário - EvoluçãoParking')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header('Cadastro de funcionário')}"></header>
+
+<main class="container narrow">
+    <div th:if="${erro}" class="alert alert-error" th:text="${erro}"></div>
+
+    <section class="panel">
+        <h2 th:text="${form.id() != null ? 'Editar funcionário' : 'Novo funcionário'}">Formulário</h2>
+        <form th:action="@{/admin/funcionarios/salvar}" method="post" class="form" th:object="${form}">
+            <input type="hidden" th:field="*{id}">
+            <label>Nome completo
+                <input type="text" th:field="*{nome}" required maxlength="100">
+            </label>
+            <label>Login
+                <input type="text" th:field="*{login}" required maxlength="80">
+            </label>
+            <label>Senha
+                <input type="password" th:field="*{senha}" th:placeholder="${form.id() != null ? 'Deixe em branco para manter' : 'Mínimo 4 caracteres'}">
+            </label>
+            <label th:if="${form.id() != null}">
+                <input type="checkbox" th:field="*{ativo}"> Ativo
+            </label>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Salvar</button>
+                <a th:href="@{/admin/funcionarios}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </section>
+</main>
+</body>
+</html>

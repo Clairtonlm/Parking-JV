@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Operação - EvoluçãoParking')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header('Operação do estacionamento')}"></header>
+
+<main class="container">
+    <div th:if="${sucesso}" class="alert alert-success" th:text="${sucesso}"></div>
+    <div th:if="${erro}" class="alert alert-error" th:text="${erro}"></div>
+
+    <section class="stats">
+        <article class="stat-card">
+            <span class="stat-label">Vagas livres</span>
+            <strong class="stat-value" th:text="${operacao.vagasLivres()}">0</strong>
+        </article>
+        <article class="stat-card">
+            <span class="stat-label">Ocupadas</span>
+            <strong class="stat-value" th:text="${operacao.vagasOcupadas()}">0</strong>
+        </article>
+    </section>
+
+    <section class="grid-2">
+        <article class="panel">
+            <h2>Entrada de veículo</h2>
+            <form th:action="@{/operacao/entrada}" method="post" class="form" th:object="${entrada}">
+                <label>Placa
+                    <input type="text" th:field="*{placa}" placeholder="ABC1D23" required maxlength="8">
+                </label>
+                <label>Nome do motorista
+                    <input type="text" th:field="*{nomeMotorista}" placeholder="Nome completo" required maxlength="120">
+                </label>
+                <label>Tipo
+                    <select th:field="*{tipoVeiculo}" required>
+                        <option value="CARRO">Carro</option>
+                        <option value="MOTO">Moto</option>
+                    </select>
+                </label>
+                <label>Modalidade de pagamento
+                    <select th:field="*{modalidade}" required>
+                        <option th:each="m : ${modalidades}" th:value="${m}" th:text="${m.descricao}"></option>
+                    </select>
+                </label>
+                <button type="submit" class="btn btn-primary">Registrar entrada e imprimir recibo</button>
+            </form>
+            <ul class="hint-list">
+                <li><strong>Fixo 24h:</strong> valor único, válido por 24 horas</li>
+                <li><strong>Fração:</strong> R$ 5/h, tolerância 15 min</li>
+                <li><strong>Bloco 5h:</strong> R$ 20 — excedente + R$ 2 / 15 min</li>
+                <li><strong>Bloco 10h:</strong> R$ 45 — excedente + R$ 2 / 15 min</li>
+            </ul>
+        </article>
+
+        <article class="panel">
+            <h2>Saída de veículo</h2>
+            <form th:action="@{/operacao/preview}" method="get" class="form inline-preview">
+                <label>Placa ou nome do motorista
+                    <input type="text" name="termo" th:value="${previewTermo}" placeholder="ABC1D23 ou João" required>
+                </label>
+                <button type="submit" class="btn btn-secondary">Consultar valor</button>
+            </form>
+            <div th:if="${previewValor != null}" class="preview-box">
+                <p>Valor estimado agora:</p>
+                <strong th:text="'R$ ' + ${#numbers.formatDecimal(previewValor, 1, 2)}">R$ 0,00</strong>
+            </div>
+            <form th:action="@{/operacao/saida}" method="post" class="form">
+                <label>Placa ou nome para saída
+                    <input type="text" name="termo" th:value="${previewTermo}" placeholder="ABC1D23 ou João" required>
+                </label>
+                <button type="submit" class="btn btn-primary">Registrar saída e imprimir recibo</button>
+            </form>
+        </article>
+    </section>
+
+    <section class="panel">
+        <h2>Mapa de vagas</h2>
+        <div class="vagas-grid">
+            <div th:each="vaga : ${operacao.vagas()}"
+                 th:class="${'vaga ' + (vaga.ocupada ? 'ocupada' : 'livre')}"
+                 th:text="${vaga.numero}">1</div>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Veículos no pátio</h2>
+        <table th:if="${!operacao.veiculosNoPatio().isEmpty()}">
+            <thead>
+            <tr>
+                <th>Recibo</th>
+                <th>Placa</th>
+                <th>Motorista</th>
+                <th>Tipo</th>
+                <th>Modalidade</th>
+                <th>Vaga</th>
+                <th>Entrada</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="v : ${operacao.veiculosNoPatio()}">
+                <td th:text="${v.codigoRecibo}">CODE</td>
+                <td th:text="${v.placa}">ABC</td>
+                <td th:text="${v.nomeMotorista}">Nome</td>
+                <td th:text="${v.tipoVeiculo}">CARRO</td>
+                <td th:text="${v.modalidade.descricao}">Mod</td>
+                <td th:text="${v.numeroVaga}">1</td>
+                <td th:text="${#temporals.format(v.entrada, 'dd/MM/yyyy HH:mm')}">—</td>
+            </tr>
+            </tbody>
+        </table>
+        <p th:if="${operacao.veiculosNoPatio().isEmpty()}" class="empty">Nenhum veículo no pátio.</p>
+    </section>
+</main>
+</body>
+</html>
